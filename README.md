@@ -176,7 +176,9 @@ At the table level, the schema uses composite keys and foreign keys to enforce t
 * **users:** Has primary key `user_id` (auto-incrementing). Unique constraints are placed on `user_email` and `user_phone_no` to prevent duplicates.
 * **parking\_sessions:** Uses primary key `ticket_id`. It has foreign keys on `(parkinglot_id, floor_id, row_id, slot_id)` referencing `slots` (indicating which slot is used), and on `user_id` referencing `users`.
 
-* ```mermaid
+These constraints ensure data integrity. For example, a session cannot reference a slot that doesn’t exist, and a floor cannot exist without its parent parking lot.
+
+```mermaid
 
 erDiagram
     parkinglots_details {
@@ -266,8 +268,6 @@ erDiagram
 
 ```
 
-
-These constraints ensure data integrity. For example, a session cannot reference a slot that doesn’t exist, and a floor cannot exist without its parent parking lot.
 
 ## Schema Details
 
