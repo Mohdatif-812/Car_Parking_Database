@@ -268,6 +268,17 @@ erDiagram
 
 ```
 
+# Detailed Table Relationships in Parking Management System
+
+# Summary Table
+
+| Parent Table         | Child Table         | Relationship Type | Foreign Key(s)                                       |
+|----------------------|---------------------|-------------------|------------------------------------------------------|
+| parkinglots_details  | floors              | 1:N               | floors.parkinglot_id → parkinglots_details          |
+| floors               | rows                | 1:N               | rows.parkinglot_id, floor_id → floors               |
+| rows                 | slots               | 1:N               | slots.parkinglot_id, floor_id, row_id → rows        |
+| slots                | parking_sessions    | 1:N               | parking_sessions.(...) → slots                      |
+| users                | parking_sessions    | 1:N               | parking_sessions.user_id → users                    |
 
 ## Schema Details
 
