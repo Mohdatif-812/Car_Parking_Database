@@ -146,9 +146,22 @@ After import, you can run `\dt` in psql or refresh pgAdmin to see the created ta
 
 ## Database Design
 
+
+
 ### High-Level Design
 
 &#x20;*Figure: Entity-Relationship Diagram of the parking management database (embedded image).* The ERD shows the main entities and relationships. A `parkinglots_details` record *has* one or more `floors`, each `floor` contains many `rows`, and each `row` contains many `slots`. Registered `users` can initiate multiple `parking_sessions` (one-to-many). Each `slot` can host many historical sessions over time (one-to-many), but at any given moment a slot is associated with at most one active session (optional one-to-one).
+
+*Figure: Entity-Relationship Diagram of the parking management database (Mermaid diagram).*
+
+```mermaid
+flowchart TB
+    PL["parkinglots_details"] -- 1:N --> F["floors"]
+    F -- 1:N --> R["rows"]
+    R -- 1:N --> S["slots"]
+    S -- 1:N --> PS["parking_sessions"]
+    U["users"] -- 1:N --> PS
+```
 
 You can also view the ERD [PNG file](ERD_parking_app.pgerd.png).
 
@@ -162,6 +175,97 @@ At the table level, the schema uses composite keys and foreign keys to enforce t
 * **slots:** Uses composite primary key (`parkinglot_id, floor_id, row_id, slot_id`). The `(parkinglot_id, floor_id, row_id)` triple is a foreign key referencing `rows`, linking each slot to its row.
 * **users:** Has primary key `user_id` (auto-incrementing). Unique constraints are placed on `user_email` and `user_phone_no` to prevent duplicates.
 * **parking\_sessions:** Uses primary key `ticket_id`. It has foreign keys on `(parkinglot_id, floor_id, row_id, slot_id)` referencing `slots` (indicating which slot is used), and on `user_id` referencing `users`.
+
+* ```mermaid
+
+erDiagram
+    parkinglots_details {
+        int parkinglot_id PK "Parking Lot ID (Primary Key)"
+        text parking_name
+        text city
+        text landmark
+        text address
+        numeric latitude
+        numeric longitude
+        text physical_appearance
+        text parking_ownership
+        text parking_surface
+        text has_cctv
+        text has_boom_barrier
+        text ticket_generated
+        text entry_exit_gates
+        text weekly_off
+        text parking_timing
+        text vehicle_types
+        int car_capacity
+        int available_car_slots
+        int two_wheeler_capacity
+        int available_two_wheeler_slots
+        text parking_type
+        text payment_modes
+        text car_parking_charge
+        text two_wheeler_parking_charge
+        text allows_prepaid_passes
+        text provides_valet_services
+        text value_added_services
+    }
+
+    floors {
+        int parkinglot_id PK, FK "Parking Lot ID (Composite PK, Foreign Key)"
+        int floor_id PK "Floor ID (Composite PK)"
+        varchar floor_name
+    }
+
+    rows {
+        int parkinglot_id PK, FK "Parking Lot ID (Composite PK, Foreign Key)"
+        int floor_id PK, FK "Floor ID (Composite PK, Foreign Key)"
+        int row_id PK "Row ID (Composite PK)"
+        varchar row_name
+    }
+
+    slots {
+        int parkinglot_id PK, FK "Parking Lot ID (Composite PK, Foreign Key)"
+        int floor_id PK, FK "Floor ID (Composite PK, Foreign Key)"
+        int row_id PK, FK "Row ID (Composite PK, Foreign Key)"
+        int slot_id PK "Slot ID (Composite PK)"
+        varchar slot_name
+        int status "0=Free, 1=Occupied"
+        varchar vehicle_reg_no "(Nullable)"
+        varchar ticket_id FK "(Nullable) Current Ticket ID"
+    }
+
+    users {
+        int user_id PK "User ID (Primary Key, Auto-increment)"
+        varchar user_name
+        varchar user_email
+        varchar user_password "Hashed password"
+        varchar user_phone_no
+        text user_address "(Nullable)"
+    }
+
+    parking_sessions {
+        varchar ticket_id PK "Ticket ID (Primary Key)"
+        int parkinglot_id FK "(Nullable) Parking Lot ID (Foreign Key)"
+        int floor_id FK "(Nullable) Floor ID (Foreign Key)"
+        int row_id FK "(Nullable) Row ID (Foreign Key)"
+        int slot_id FK "(Nullable) Slot ID (Foreign Key)"
+        varchar vehicle_reg_no
+        int user_id FK "(Nullable) User ID (Foreign Key)"
+        timestamp start_time
+        timestamp end_time "(Nullable)"
+        numeric duration_hrs "Generated Column"
+    }
+
+    parkinglots_details ||--o{ floors : "has"
+    floors ||--o{ rows : "contains"
+    rows ||--o{ slots : "contains"
+    users ||--o{ parking_sessions : "initiates"
+    slots ||--o{ parking_sessions : "hosts"
+    slots }o--|| parking_sessions : "currently occupied by (via ticket_id)"
+
+
+```
+
 
 These constraints ensure data integrity. For example, a session cannot reference a slot that doesn’t exist, and a floor cannot exist without its parent parking lot.
 
